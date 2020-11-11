@@ -21,6 +21,29 @@ const colors = {
   tamponiGiornalieri: '#5c677d',
 };
 
+const ResponsiveContainerDefaultProps = {
+  width: '100%',
+  minWidth: 480,
+  height: '100%',
+  maxHeight: 320,
+};
+
+const XAxisDefaultProps = {
+  dataKey: 'giorno',
+  tickCount: 10,
+  minTickGap: 50,
+  tickSize: 6,
+  tickMargin: 10,
+  tickFormatter: (giorno) => dayjs(giorno).format('DD MMM YY'),
+};
+const YAxisDefaultProps = {
+  tickCount: 10,
+  minTickGap: 10,
+  tickSize: 6,
+  tickMargin: 10,
+  tickFormatter: (tick) => (tick < 1000 ? tick : `${tick / 1000}K`),
+};
+
 export default function Home({ data: initialData }) {
   const { data, error, isValidating } = useSWR(URL, fetcher, { initialData });
   const data0 = data.map(
@@ -54,20 +77,21 @@ export default function Home({ data: initialData }) {
     }),
   );
   const lines2 = ['nuoviPositivi', 'tamponiGiornalieri', 'totaleCasi'];
+  const data3 = data.map(({ data: giorno, terapia_intensiva: terapiaIntensiva, deceduti }) => ({
+    giorno,
+    terapiaIntensiva,
+    deceduti,
+  }));
+  const lines3 = ['terapiaIntensiva', 'deceduti'];
 
   return (
-    <div style={{ display: 'flex', padding: 50 }}>
+    <div style={{ display: 'flex', padding: 100 }}>
       <div style={{ flex: 3 }}>
-        <ResponsiveContainer width="100%" minWidth={710} height="100%" maxHeight={400}>
+        <h4>{lines0.join(' vs ')}</h4>
+        <ResponsiveContainer {...ResponsiveContainerDefaultProps}>
           <LineChart data={data0}>
-            <XAxis
-              dataKey="giorno"
-              tickCount={10}
-              minTickGap={50}
-              tickSize={10}
-              tickFormatter={(giorno) => dayjs(giorno).format('DD MMM YY')}
-            />
-            <YAxis tickCount={10} minTickGap={10} tickSize={10} />
+            <XAxis {...XAxisDefaultProps} />
+            <YAxis {...YAxisDefaultProps} />
             <Tooltip />
             {lines0.map((k) => (
               <Line
@@ -82,16 +106,11 @@ export default function Home({ data: initialData }) {
           </LineChart>
         </ResponsiveContainer>
         <div style={{ height: 50 }} />
-        <ResponsiveContainer width="100%" minWidth={710} height="100%" maxHeight={400}>
+        <h4>{lines1.join(' vs ')}</h4>
+        <ResponsiveContainer {...ResponsiveContainerDefaultProps}>
           <LineChart data={data1}>
-            <XAxis
-              dataKey="giorno"
-              tickCount={10}
-              minTickGap={50}
-              tickSize={10}
-              tickFormatter={(giorno) => dayjs(giorno).format('DD MMM YY')}
-            />
-            <YAxis tickCount={10} minTickGap={10} tickSize={10} />
+            <XAxis {...XAxisDefaultProps} />
+            <YAxis {...YAxisDefaultProps} />
             <Tooltip />
             {lines1.map((k) => (
               <Line
@@ -106,16 +125,11 @@ export default function Home({ data: initialData }) {
           </LineChart>
         </ResponsiveContainer>
         <div style={{ height: 50 }} />
-        <ResponsiveContainer width="100%" minWidth={710} height="100%" maxHeight={400}>
+        <h4>{lines2.join(' vs ')}</h4>
+        <ResponsiveContainer {...ResponsiveContainerDefaultProps}>
           <LineChart data={data2}>
-            <XAxis
-              dataKey="giorno"
-              tickCount={10}
-              minTickGap={50}
-              tickSize={10}
-              tickFormatter={(giorno) => dayjs(giorno).format('DD MMM YY')}
-            />
-            <YAxis tickCount={10} minTickGap={10} tickSize={10} />
+            <XAxis {...XAxisDefaultProps} />
+            <YAxis {...YAxisDefaultProps} />
             <Tooltip />
             {lines2.map((k) => (
               <Line
@@ -129,27 +143,39 @@ export default function Home({ data: initialData }) {
             ))}
           </LineChart>
         </ResponsiveContainer>
+        <div style={{ height: 50 }} />
+        <h4>{lines3.join(' vs ')}</h4>
+        <ResponsiveContainer {...ResponsiveContainerDefaultProps}>
+          <LineChart data={data3}>
+            <XAxis {...XAxisDefaultProps} />
+            <YAxis {...YAxisDefaultProps} />
+            <Tooltip />
+            {lines3.map((k) => (
+              <Line
+                type="monotone"
+                dataKey={k}
+                dot={false}
+                key={`g3-${k}`}
+                stroke={colors[k] || colors.default}
+                strokeWidth={1}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
       </div>
       <div style={{ width: 40 }} />
       <div style={{ flex: 1, position: 'relative' }}>
-        <div
-          style={{
-            maxHeight: '100%',
-            overflow: 'auto',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-          }}>
-          {[...data].reverse().map((dailyData) => (
+        <h4>Last week data</h4>
+        {[...data]
+          .reverse()
+          .slice(0, 7)
+          .map((dailyData) => (
             <div>
               <strong>{dayjs(dailyData.data).format('DD MMM YY')}</strong>
               <br />
               <pre>{JSON.stringify(dailyData, null, 2)}</pre>
             </div>
           ))}
-        </div>
       </div>
     </div>
   );
