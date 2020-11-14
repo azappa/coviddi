@@ -1,52 +1,38 @@
+import { useState } from 'react';
 import useSWR from 'swr';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import dayjs from 'dayjs';
 
-const URL = `https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-json/dpc-covid19-ita-andamento-nazionale.json`;
+import { API_URL, fetcher } from '../utils/dataFetch';
+import { keys as timeFramesKeys, timeFrames, timeFramesDict } from '../utils/timeFrames';
+import LineGraph from '../components/LineGraph';
 
-const fetcher = async (...args) => {
-  const res = await fetch(...args);
-  return res.json();
-};
+const isSameOrAfter = require('dayjs/plugin/isSameOrAfter');
 
-const colors = {
-  default: '#2a9d8f',
-  ricoveratiConSintomi: '#003049',
-  terapiaIntensiva: '#d62828',
-  isolamentoDomiciliare: '#fcbf49',
-  totalePositivi: '#3d5a80',
-  tamponi: '#a4161a',
-  nuoviPositivi: '#5f0f40',
-  totaleCasi: '#8a5a44',
-  tamponiGiornalieri: '#5c677d',
-};
-
-const ResponsiveContainerDefaultProps = {
-  width: '100%',
-  minWidth: 480,
-  height: '100%',
-  maxHeight: 320,
-};
-
-const XAxisDefaultProps = {
-  dataKey: 'giorno',
-  tickCount: 10,
-  minTickGap: 50,
-  tickSize: 6,
-  tickMargin: 10,
-  tickFormatter: (giorno) => dayjs(giorno).format('DD MMM YY'),
-};
-const YAxisDefaultProps = {
-  tickCount: 10,
-  minTickGap: 10,
-  tickSize: 6,
-  tickMargin: 10,
-  tickFormatter: (tick) => (tick < 1000 ? tick : `${tick / 1000}K`),
-};
+dayjs.extend(isSameOrAfter);
 
 export default function Home({ data: initialData }) {
-  const { data, error, isValidating } = useSWR(URL, fetcher, { initialData });
-  const data0 = data.map(
+  const { data: covidData, error, isValidating } = useSWR(API_URL, fetcher, { initialData });
+
+  if (!covidData) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error...</div>;
+  }
+
+  const [timeFrame, setTimeFrame] = useState(timeFrames.LASTWEEK);
+
+  const lastDayInTimeFrame =
+    timeFrame !== -1 ? dayjs().subtract(timeFrame, 'days') : dayjs(covidData[0].data);
+
+  const getCurrentDataTimeFrame = () => {
+    return [...covidData].filter(({ data: giorno }) =>
+      dayjs(giorno).isSameOrAfter(lastDayInTimeFrame),
+    );
+  };
+
+  const data0 = getCurrentDataTimeFrame().map(
     ({
       data: giorno,
       ricoverati_con_sintomi: ricoveratiConSintomi,
@@ -61,127 +47,81 @@ export default function Home({ data: initialData }) {
     }),
   );
   const lines0 = ['ricoveratiConSintomi', 'terapiaIntensiva', 'isolamentoDomiciliare', 'totale'];
-  const data1 = data.map(({ data: giorno, totale_positivi: totalePositivi, tamponi }) => ({
-    giorno,
-    totalePositivi,
-    tamponi,
-  }));
+  const data1 = getCurrentDataTimeFrame().map(
+    ({ data: giorno, totale_positivi: totalePositivi, tamponi }) => ({
+      giorno,
+      totalePositivi,
+      tamponi,
+    }),
+  );
   const lines1 = ['totalePositivi', 'tamponi'];
-  const data2 = data.map(
+  const data2 = getCurrentDataTimeFrame().map(
     ({ data: giorno, nuovi_positivi: nuoviPositivi, tamponi, totale_casi: totaleCasi }, index) => ({
       giorno,
       nuoviPositivi,
       tamponi,
-      tamponiGiornalieri: data[index - 1] ? tamponi - data[index - 1].tamponi : tamponi,
+      tamponiGiornalieri: getCurrentDataTimeFrame()[index - 1]
+        ? tamponi - getCurrentDataTimeFrame()[index - 1].tamponi
+        : tamponi,
       totaleCasi,
     }),
   );
   const lines2 = ['nuoviPositivi', 'tamponiGiornalieri', 'totaleCasi'];
-  const data3 = data.map(({ data: giorno, terapia_intensiva: terapiaIntensiva, deceduti }) => ({
-    giorno,
-    terapiaIntensiva,
-    deceduti,
-  }));
+  const data3 = getCurrentDataTimeFrame().map(
+    ({ data: giorno, terapia_intensiva: terapiaIntensiva, deceduti }) => ({
+      giorno,
+      terapiaIntensiva,
+      deceduti,
+    }),
+  );
   const lines3 = ['terapiaIntensiva', 'deceduti'];
 
   return (
-    <div style={{ display: 'flex', padding: 100 }}>
-      <div style={{ flex: 3 }}>
-        <h4>{lines0.join(' vs ')}</h4>
-        <ResponsiveContainer {...ResponsiveContainerDefaultProps}>
-          <LineChart data={data0}>
-            <XAxis {...XAxisDefaultProps} />
-            <YAxis {...YAxisDefaultProps} />
-            <Tooltip />
-            {lines0.map((k) => (
-              <Line
-                type="monotone"
-                dataKey={k}
-                dot={false}
-                key={`g0-${k}`}
-                stroke={colors[k] || colors.default}
-                strokeWidth={1}
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-        <div style={{ height: 50 }} />
-        <h4>{lines1.join(' vs ')}</h4>
-        <ResponsiveContainer {...ResponsiveContainerDefaultProps}>
-          <LineChart data={data1}>
-            <XAxis {...XAxisDefaultProps} />
-            <YAxis {...YAxisDefaultProps} />
-            <Tooltip />
-            {lines1.map((k) => (
-              <Line
-                type="monotone"
-                dataKey={k}
-                dot={false}
-                key={`g1-${k}`}
-                stroke={colors[k] || colors.default}
-                strokeWidth={1}
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-        <div style={{ height: 50 }} />
-        <h4>{lines2.join(' vs ')}</h4>
-        <ResponsiveContainer {...ResponsiveContainerDefaultProps}>
-          <LineChart data={data2}>
-            <XAxis {...XAxisDefaultProps} />
-            <YAxis {...YAxisDefaultProps} />
-            <Tooltip />
-            {lines2.map((k) => (
-              <Line
-                type="monotone"
-                dataKey={k}
-                dot={false}
-                key={`g2-${k}`}
-                stroke={colors[k] || colors.default}
-                strokeWidth={1}
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-        <div style={{ height: 50 }} />
-        <h4>{lines3.join(' vs ')}</h4>
-        <ResponsiveContainer {...ResponsiveContainerDefaultProps}>
-          <LineChart data={data3}>
-            <XAxis {...XAxisDefaultProps} />
-            <YAxis {...YAxisDefaultProps} />
-            <Tooltip />
-            {lines3.map((k) => (
-              <Line
-                type="monotone"
-                dataKey={k}
-                dot={false}
-                key={`g3-${k}`}
-                stroke={colors[k] || colors.default}
-                strokeWidth={1}
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
+    <>
+      <div style={{ display: 'flex', padding: '20px 100px' }}>
+        {Object.keys(timeFramesKeys).map((k) => (
+          <div
+            style={{
+              padding: '0 40px 10px 0',
+              color: timeFrames[k] === timeFrame ? 'blue' : 'grey ',
+              cursor: 'pointer',
+            }}
+            onClick={() => setTimeFrame(timeFrames[k])}
+            role="button"
+          >
+            <span>{timeFramesDict[k].label}</span>
+          </div>
+        ))}
       </div>
-      <div style={{ width: 40 }} />
-      <div style={{ flex: 1, position: 'relative' }}>
-        <h4>Last week data</h4>
-        {[...data]
-          .reverse()
-          .slice(0, 7)
-          .map((dailyData) => (
-            <div>
-              <strong>{dayjs(dailyData.data).format('DD MMM YY')}</strong>
-              <br />
-              <pre>{JSON.stringify(dailyData, null, 2)}</pre>
-            </div>
-          ))}
+      <div style={{ display: 'flex', padding: '20px 100px' }}>
+        <div style={{ flex: 3 }}>
+          <LineGraph title={lines0.join(' vs ')} graphLines={lines0} graphData={data0} />
+          <div style={{ height: 50 }} />
+          <LineGraph title={lines1.join(' vs ')} graphLines={lines1} graphData={data1} />
+          <div style={{ height: 50 }} />
+          <LineGraph title={lines2.join(' vs ')} graphLines={lines2} graphData={data2} />
+          <div style={{ height: 50 }} />
+          <LineGraph title={lines3.join(' vs ')} graphLines={lines3} graphData={data3} />
+        </div>
+        <div style={{ width: 40 }} />
+        <div style={{ flex: 1, position: 'relative' }}>
+          <h4>Periodo selezionato</h4>
+          {getCurrentDataTimeFrame()
+            .reverse()
+            .map((dailyData) => (
+              <div>
+                <strong>{dayjs(dailyData.data).format('DD MMM YY')}</strong>
+                <br />
+                <pre>{JSON.stringify(dailyData, null, 2)}</pre>
+              </div>
+            ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
-export async function getServerSideProps() {
-  const data = await fetcher(URL);
+export async function getStaticProps() {
+  const data = await fetcher(API_URL);
   return { props: { data } };
 }
