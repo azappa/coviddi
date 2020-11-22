@@ -21,5 +21,5 @@ export const YAxisDefaultProps = {
   minTickGap: 10,
   tickSize: 6,
   tickMargin: 10,
-  tickFormatter: (tick) => (tick < 1000 ? tick : `${tick / 1000}K`),
+  tickFormatter: (tick) => (tick > -1000 && tick < 1000 ? tick : `${tick / 1000}K`),
 };

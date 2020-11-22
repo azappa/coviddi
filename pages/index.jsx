@@ -12,9 +12,7 @@ const isSameOrAfter = require('dayjs/plugin/isSameOrAfter');
 dayjs.extend(isSameOrAfter);
 
 export default function Home({ data: initialData }) {
-  const { data: covidData, error, isValidating } = useSWR(API_URL, fetcher, {
-    initialData: parseData(initialData),
-  });
+  const { data: covidData, error, isValidating } = useSWR(API_URL, fetcher, { initialData });
 
   if (!covidData) {
     return <div>Loading...</div>;
@@ -24,15 +22,15 @@ export default function Home({ data: initialData }) {
     return <div>Error...</div>;
   }
 
-  const parsedData = parseData(covidData);
-
   const [timeFrame, setTimeFrame] = useState(timeFrames.LASTWEEK);
 
   const lastDayInTimeFrame =
-    timeFrame !== -1 ? dayjs().subtract(timeFrame, 'days') : dayjs(covidData[0].data);
+    timeFrame !== -1 ? dayjs().subtract(timeFrame, 'days') : dayjs(parseData(covidData)[0].giorno);
 
   const getCurrentDataTimeFrame = () => {
-    return [...parsedData].filter(({ giorno }) => dayjs(giorno).isSameOrAfter(lastDayInTimeFrame));
+    return [...parseData(covidData)].filter(({ giorno }) =>
+      dayjs(giorno).isSameOrAfter(lastDayInTimeFrame),
+    );
   };
 
   const data0 = getCurrentDataTimeFrame().map(
@@ -62,15 +60,13 @@ export default function Home({ data: initialData }) {
   }));
   const lines1 = ['positiviTotali', 'tamponiTotali'];
   const data2 = getCurrentDataTimeFrame().map(
-    ({ giorno, nuoviPositiviTotali, tamponiTotali, tamponiGiornalieri, casiTotali }) => ({
+    ({ giorno, nuoviPositiviGiornalieri, tamponiGiornalieri }) => ({
       giorno,
-      nuoviPositiviTotali,
-      tamponiTotali,
+      nuoviPositiviGiornalieri,
       tamponiGiornalieri,
-      casiTotali,
     }),
   );
-  const lines2 = ['nuoviPositiviTotali', 'tamponiGiornalieri', 'casiTotali'];
+  const lines2 = ['nuoviPositiviGiornalieri', 'tamponiGiornalieri'];
   const data3 = getCurrentDataTimeFrame().map(
     ({ giorno, terapiaIntensivaTotali, decedutiTotali }) => ({
       giorno,
@@ -92,6 +88,7 @@ export default function Home({ data: initialData }) {
             }}
             onClick={() => setTimeFrame(timeFrames[k])}
             role="button"
+            key={`button-${timeFramesDict[k].label}`}
           >
             <span>{timeFramesDict[k].label}</span>
           </div>
@@ -113,8 +110,8 @@ export default function Home({ data: initialData }) {
           {getCurrentDataTimeFrame()
             .reverse()
             .map((dailyData) => (
-              <div>
-                <strong>{dayjs(dailyData.data).format('DD MMM YY')}</strong>
+              <div key={`dailyData-${dayjs(dailyData.giorno).format('DD MMM YY')}`}>
+                <strong>{dayjs(dailyData.giorno).format('DD MMM YY')}</strong>
                 <br />
                 <pre>{JSON.stringify(dailyData, null, 2)}</pre>
               </div>
