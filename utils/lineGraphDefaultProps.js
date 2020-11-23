@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 export const ResponsiveContainerDefaultProps = {
   width: '100%',
   minWidth: 480,
-  height: '100%',
+  minHeight: 320,
   maxHeight: 320,
 };
 

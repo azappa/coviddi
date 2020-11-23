@@ -53,12 +53,14 @@ export default function Home({ data: initialData }) {
     'isolamentoDomiciliareTotali',
     'totale',
   ];
-  const data1 = getCurrentDataTimeFrame().map(({ giorno, positiviTotali, tamponiTotali }) => ({
-    giorno,
-    positiviTotali,
-    tamponiTotali,
-  }));
-  const lines1 = ['positiviTotali', 'tamponiTotali'];
+  const data1 = getCurrentDataTimeFrame().map(
+    ({ giorno, casiGiornalieri, dimessiGuaritiGiornalieri }) => ({
+      giorno,
+      casiGiornalieri,
+      dimessiGuaritiGiornalieri,
+    }),
+  );
+  const lines1 = ['casiGiornalieri', 'dimessiGuaritiGiornalieri'];
   const data2 = getCurrentDataTimeFrame().map(
     ({ giorno, nuoviPositiviGiornalieri, tamponiGiornalieri }) => ({
       giorno,
@@ -78,33 +80,49 @@ export default function Home({ data: initialData }) {
 
   return (
     <>
-      <div style={{ display: 'flex', padding: '20px 100px' }}>
-        {Object.keys(timeFramesKeys).map((k) => (
-          <div
-            style={{
-              padding: '0 40px 10px 0',
-              color: timeFrames[k] === timeFrame ? 'blue' : 'grey ',
-              cursor: 'pointer',
-            }}
-            onClick={() => setTimeFrame(timeFrames[k])}
-            role="button"
-            key={`button-${timeFramesDict[k].label}`}
-          >
-            <span>{timeFramesDict[k].label}</span>
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', padding: '20px 100px' }}>
-        <div style={{ flex: 3 }}>
-          <LineGraph title={lines0.join(' vs ')} graphLines={lines0} graphData={data0} />
-          <div style={{ height: 50 }} />
-          <LineGraph title={lines1.join(' vs ')} graphLines={lines1} graphData={data1} />
-          <div style={{ height: 50 }} />
-          <LineGraph title={lines2.join(' vs ')} graphLines={lines2} graphData={data2} />
-          <div style={{ height: 50 }} />
-          <LineGraph title={lines3.join(' vs ')} graphLines={lines3} graphData={data3} />
+      <div style={{ display: 'flex', padding: '20px 100px', justifyContent: 'space-between' }}>
+        <div style={{ fontSize: 24 }}>コヴィッド 19 🇮🇹</div>
+        <div>
+          {Object.keys(timeFramesKeys).map((k) => {
+            const isSelected = timeFrames[k] === timeFrame;
+            return (
+              <div
+                style={{
+                  display: 'inline-block',
+                  margin: '0 10px 10px 0',
+                  padding: 10,
+                  color: isSelected ? '#FFFFFF' : '#BBBBBB',
+                  cursor: 'pointer',
+                  background: isSelected ? '#8CB3E2' : 'transparent',
+                  textAlign: 'center',
+                  borderBottom: `2px solid ${isSelected ? 'transparent' : '#CCCCCC'}`,
+                }}
+                onClick={() => setTimeFrame(timeFrames[k])}
+                role="button"
+                key={`button-${timeFramesDict[k].label}`}
+              >
+                <span>{timeFramesDict[k].label}</span>
+              </div>
+            );
+          })}
         </div>
-        <div style={{ width: 40 }} />
+      </div>
+
+      <div style={{ padding: '20px 100px' }}>
+        <LineGraph title={lines0.join(' vs ')} graphLines={lines0} graphData={data0} />
+        <div style={{ height: 20 }} />
+        <div style={{ display: 'flex' }}>
+          <div style={{ flex: 1 }}>
+            <LineGraph title={lines1.join(' vs ')} graphLines={lines1} graphData={data1} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <LineGraph title={lines2.join(' vs ')} graphLines={lines2} graphData={data2} />
+          </div>
+        </div>
+        <div style={{ height: 20 }} />
+        <LineGraph title={lines3.join(' vs ')} graphLines={lines3} graphData={data3} />
+        {/*
+        <div style={{ width: 20 }} />
         <div style={{ flex: 1, position: 'relative' }}>
           <h4>Periodo selezionato</h4>
           {getCurrentDataTimeFrame()
@@ -117,6 +135,7 @@ export default function Home({ data: initialData }) {
               </div>
             ))}
         </div>
+        */}
       </div>
     </>
   );

@@ -17,6 +17,7 @@ const LineGraph = ({ title, graphLines, graphData }) => (
         <Tooltip />
         {graphLines.map((k) => (
           <Line
+            isAnimationActive={false}
             type="monotone"
             dataKey={k}
             dot={false}

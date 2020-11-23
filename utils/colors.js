@@ -1,6 +1,7 @@
 export default {
   default: '#2a9d8f',
-  casiGiornaieri: '#8a5a44',
+  casiGiornalieri: '#68B1A0',
+  dimessiGuaritiGiornalieri: '#75658C',
   isolamentoDomiciliareTotali: '#fcbf49',
   nuoviPositiviGiornalieri: '#5f0f40',
   positiviTotali: '#3d5a80',
