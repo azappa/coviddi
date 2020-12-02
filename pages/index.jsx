@@ -13,6 +13,7 @@ dayjs.extend(isSameOrAfter);
 
 export default function Home({ data: initialData }) {
   const { data: covidData, error, isValidating } = useSWR(API_URL, fetcher, { initialData });
+  const [timeFrame, setTimeFrame] = useState(timeFrames.LASTWEEK);
 
   if (!covidData) {
     return <div>Loading...</div>;
@@ -21,8 +22,6 @@ export default function Home({ data: initialData }) {
   if (error) {
     return <div>Error...</div>;
   }
-
-  const [timeFrame, setTimeFrame] = useState(timeFrames.LASTWEEK);
 
   const lastDayInTimeFrame =
     timeFrame !== -1 ? dayjs().subtract(timeFrame, 'days') : dayjs(parseData(covidData)[0].giorno);
@@ -81,7 +80,7 @@ export default function Home({ data: initialData }) {
   return (
     <>
       <div style={{ display: 'flex', padding: '20px 100px', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: 24 }}>コヴィッド 19 🇮🇹</div>
+        <div style={{ fontSize: 24 }}>🦠 19 🇮🇹</div>
         <div>
           {Object.keys(timeFramesKeys).map((k) => {
             const isSelected = timeFrames[k] === timeFrame;
